@@ -66,20 +66,31 @@ export default async function handler(req, res) {
     // رسالة تليجرام للمسؤول مع زر يفتح واتساب
     const telegramText = `📦 *تحديث طلب*\n*رقم الطلب:* ${orderId}\n*العميل:* ${name}\n*الهاتف:* ${phone}\n\n${messageText}`;
 
-    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: process.env.TELEGRAM_CHAT_ID,
-        text: telegramText,
-        parse_mode: "Markdown",
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "📩 أرسل رسالة واتساب للعميل", url: waLink }]
-          ]
-        }
-      })
-    });
+  await fetch(
+  `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: TELEGRAM_CHAT_ID,
+      text: message,
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "📲 أرسل رسالة واتساب",
+              url: `https://wa.me/${phone.replace("+", "")}?text=${encodeURIComponent(
+                `مرحبًا ${order.customer.name}، تم استلام طلبك رقم ${order.id} وهو الآن في حالة: ${order.status}`
+              )}`,
+            },
+          ],
+        ],
+      },
+    }),
+  }
+);
+
 
     return res.status(200).json({ ok: true });
   } catch (err) {
