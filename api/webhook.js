@@ -10,13 +10,12 @@ export default async function handler(req, res) {
     const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
     if (!TELEGRAM_TOKEN || !CHAT_ID) {
+      console.error("❌ Missing Telegram credentials:", { TELEGRAM_TOKEN, CHAT_ID });
       return res.status(500).json({ error: "Missing Telegram credentials" });
     }
 
-    // الرسالة اللي هنبعتها لتليجرام
     const message = `📩 New message from Wuilt:\n\n${JSON.stringify(req.body, null, 2)}`;
 
-    // إرسالها إلى تليجرام
     const telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -27,15 +26,16 @@ export default async function handler(req, res) {
     });
 
     const data = await telegramResponse.json();
+    console.log("✅ Telegram response:", data);
 
     if (!data.ok) {
-      console.error("Telegram Error:", data);
-      return res.status(500).json({ error: "Failed to send Telegram message" });
+      console.error("❌ Telegram Error:", data);
+      return res.status(500).json({ error: "Failed to send Telegram message", details: data });
     }
 
     return res.status(200).json({ ok: true, data });
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("💥 Webhook error:", error);
     return res.status(500).json({ error: error.message });
   }
 }
