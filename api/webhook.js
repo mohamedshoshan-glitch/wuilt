@@ -1,33 +1,41 @@
-// api/webhook.js
+import fetch from "node-fetch";
 
 export default async function handler(req, res) {
   try {
-    // ✅ استدعاء متغيرات البيئة من Vercel
-    const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-    const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
 
-    // ✅ تأكيد أن الريكوست من نوع POST ومعه body
-    const body = req.body ? req.body : {};
-    const messageText = body.message || "📦 Test: New order received from Wuilt!";
+    const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-    // ✅ إرسال رسالة إلى Telegram
-    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    if (!TELEGRAM_TOKEN || !CHAT_ID) {
+      return res.status(500).json({ error: "Missing Telegram credentials" });
+    }
 
-    const telegramResponse = await fetch(telegramUrl, {
+    // الرسالة اللي هنبعتها لتليجرام
+    const message = `📩 New message from Wuilt:\n\n${JSON.stringify(req.body, null, 2)}`;
+
+    // إرسالها إلى تليجرام
+    const telegramResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text: messageText,
+        chat_id: CHAT_ID,
+        text: message,
       }),
     });
 
-    const telegramData = await telegramResponse.json();
+    const data = await telegramResponse.json();
 
-    // ✅ الرد بنجاح
-    return res.status(200).json({ success: true, telegramData });
-  } catch (err) {
-    console.error("❌ Server Error:", err);
-    return res.status(500).json({ error: err.message });
+    if (!data.ok) {
+      console.error("Telegram Error:", data);
+      return res.status(500).json({ error: "Failed to send Telegram message" });
+    }
+
+    return res.status(200).json({ ok: true, data });
+  } catch (error) {
+    console.error("Webhook error:", error);
+    return res.status(500).json({ error: error.message });
   }
 }
