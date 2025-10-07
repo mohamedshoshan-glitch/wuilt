@@ -1,3 +1,5 @@
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 // api/webhook.js
 export default async function handler(req, res) {
   if (req.method !== "POST") {
